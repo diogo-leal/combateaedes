@@ -8,16 +8,16 @@
 model CombateAedes
 
 global {
-	int numero_de_humanos <- 100;
+	int numero_de_pessoas <- 100;
 	int numero_de_mosquitos <- 1500;
 	init {
-		create humano number:numero_de_humanos;
+		create pessoa number:numero_de_pessoas;
+		create mosquito number:numero_de_pessoas;
 	}
 }
 
-species	humano skills: [ moving ] {
-	bool contaminado <- flip(0.5);
-	float agressividade <- 10.0;
+species	pessoa skills: [ moving ] {
+	bool isInfected <- false;
 	
 	init {
 		speed <- 1.0;
@@ -28,36 +28,52 @@ species	humano skills: [ moving ] {
 	}
 	
 	reflex interacao  {
-		ask humano at_distance(1){
-			if(self.contaminado and !myself.contaminado){
-				if(self.agressividade >= myself.agressividade){
-					myself.contaminado <- true;
-					myself.agressividade <- myself.agressividade + 1;
-				}else{
-					do die;
-				}
-			}else if(!self.contaminado and !myself.contaminado){
-				myself.agressividade <- myself.agressividade + 1;
-				self.agressividade <- self.agressividade + 1;
-			}
+		ask pessoa at_distance(1){
 			
 		}
 	}
 	
 	aspect default {
-		if(!contaminado) {
+		if(!isInfected) {
 			draw circle(1) color: #green;
 		} else {
 			draw circle(1) color: #red;
 		}
-		draw string(agressividade) color: #black; 
 	}
 }
 
-experiment apocalipse type: gui{
+species mosquito skills:[moving]{
+	bool isInfected <- flip(0.3);
+	int attack_range <- 1;
+	
+	init{
+
+	}
+	
+	reflex moving{
+		do wander;
+	}
+	
+	reflex attack when: !empty(pessoa at_distance attack_range){
+		ask pessoa at_distance attack_range{
+			if (self.isInfected){
+				myself.isInfected <- true;
+			}
+			else if (myself.isInfected) {
+				self.isInfected <- true;
+			}
+		}
+	}
+	
+	aspect base{
+		draw circle(1) color: (isInfected) ? #red : #green;
+	}
+}
+
+experiment MatarMosquisto type: gui{
 	output {
 		display myDisplay {
-		species humano aspect:default ;
+		species pessoa aspect:default ;
 	}
 }
 }
